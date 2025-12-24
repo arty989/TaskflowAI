@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { fetchBoards, updateBoard, addTaskAsync, updateTaskAsync, moveTaskAsync, deleteTaskAsync, addColumnAsync, deleteColumnAsync, updateColumnLocksAsync, sendBoardInvite, revokeBoardInvite, leaveBoard } from '../store/boardsSlice';
-import { searchUsers } from '../store/usersSlice';
+import { searchUsers, fetchUsersByIds } from '../store/usersSlice';
 import { addToast } from '../store/uiSlice';
 import { Task, Column, BoardMember, TaskType } from '../types';
 import { Button, Input, Modal, Avatar } from '../components/Common';
@@ -46,6 +46,17 @@ export const BoardView = () => {
       dispatch(fetchBoards(user.id));
     }
   }, [boardId, user?.id]);
+
+  // Load all board member profiles
+  useEffect(() => {
+    if (board && board.members.length > 0) {
+      const memberIds = board.members.map(m => m.userId);
+      const missingIds = memberIds.filter(id => !users.find(u => u.id === id));
+      if (missingIds.length > 0) {
+        dispatch(fetchUsersByIds(missingIds));
+      }
+    }
+  }, [board?.members]);
 
   useEffect(() => {
     if(inviteSearch) {

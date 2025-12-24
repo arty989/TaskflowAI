@@ -12,6 +12,10 @@ export const searchUsers = createAsyncThunk('users/search', async (query: string
   return await api.users.search(query);
 });
 
+export const fetchUsersByIds = createAsyncThunk('users/fetchByIds', async (ids: string[]) => {
+  return await api.users.getByIds(ids);
+});
+
 export const fetchNotifications = createAsyncThunk('users/notifications', async (userId: string) => {
   return await api.notifications.getMy(userId);
 });
@@ -31,6 +35,14 @@ const usersSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder.addCase(searchUsers.fulfilled, (state, action) => {
+      // Merge results avoiding duplicates
+      action.payload.forEach(u => {
+        if (!state.users.find(existing => existing.id === u.id)) {
+          state.users.push(u);
+        }
+      });
+    });
+    builder.addCase(fetchUsersByIds.fulfilled, (state, action) => {
       // Merge results avoiding duplicates
       action.payload.forEach(u => {
         if (!state.users.find(existing => existing.id === u.id)) {

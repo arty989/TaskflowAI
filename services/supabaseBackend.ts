@@ -728,6 +728,22 @@ export const api = {
       const rows = requireOk(res, 'Failed to search users') as DbProfile[];
       return rows.map(mapProfileToUser);
     },
+
+    getByIds: async (ids: string[]): Promise<User[]> => {
+      if (!ids || ids.length === 0) return [];
+      
+      const res = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', ids);
+
+      if (res.error) {
+        console.error('Failed to fetch users by ids:', res.error);
+        return [];
+      }
+      
+      return (res.data as DbProfile[]).map(mapProfileToUser);
+    },
   },
 
   notifications: {
