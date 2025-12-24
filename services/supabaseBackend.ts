@@ -748,19 +748,43 @@ export const api = {
     },
 
     getMy: async (userId: string): Promise<Notification[]> => {
+      // Fetch notifications
       const res = await supabase
         .from('notifications')
-        .select('*, profiles:from_user_id(username, display_name)')
+        .select('*')
         .eq('to_user_id', userId)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      const rows = requireOk(res, 'Failed to load notifications') as Array<DbNotification & { profiles: { username: string; display_name: string } | null }>;
+      if (res.error) {
+        console.error('Failed to load notifications:', res.error);
+        return [];
+      }
+
+      const rows = res.data as DbNotification[];
+      
+      // Fetch usernames for from_user_ids
+      const fromUserIds = [...new Set(rows.map(n => n.from_user_id))];
+      let userMap: Record<string, string> = {};
+      
+      if (fromUserIds.length > 0) {
+        const profilesRes = await supabase
+          .from('profiles')
+          .select('id, username, display_name')
+          .in('id', fromUserIds);
+        
+        if (profilesRes.data) {
+          profilesRes.data.forEach((p: any) => {
+            userMap[p.id] = p.display_name || p.username || 'Unknown';
+          });
+        }
+      }
+
       return rows.map((n) => ({
         id: n.id,
         type: n.type,
         fromUserId: n.from_user_id,
-        fromUsername: n.profiles?.display_name || n.profiles?.username || 'Unknown',
+        fromUsername: userMap[n.from_user_id] || 'Unknown',
         toUserId: n.to_user_id,
         boardId: n.board_id,
         boardTitle: n.board_title ?? undefined,
