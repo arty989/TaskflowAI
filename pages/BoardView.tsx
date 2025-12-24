@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
-import { fetchBoards, updateBoard, addTaskAsync, updateTaskAsync, moveTaskAsync, deleteTaskAsync, addColumnAsync, deleteColumnAsync, updateColumnLocksAsync, sendBoardInvite, revokeBoardInvite } from '../store/boardsSlice';
+import { fetchBoards, updateBoard, addTaskAsync, updateTaskAsync, moveTaskAsync, deleteTaskAsync, addColumnAsync, deleteColumnAsync, updateColumnLocksAsync, sendBoardInvite, revokeBoardInvite, leaveBoard } from '../store/boardsSlice';
 import { searchUsers } from '../store/usersSlice';
 import { addToast } from '../store/uiSlice';
 import { Task, Column, BoardMember, TaskType } from '../types';
@@ -193,6 +193,19 @@ export const BoardView = () => {
       .catch((e: any) => dispatch(addToast({ type: 'error', message: e.message })));
   };
 
+  const handleLeaveBoard = () => {
+    if (!user || currentUserMember?.role === 'owner') return;
+    if (confirm(t.board.confirmLeave || 'Are you sure you want to leave this board?')) {
+      dispatch(leaveBoard({ boardId: board.id, userId: user.id }))
+        .unwrap()
+        .then(() => {
+          dispatch(addToast({ type: 'info', message: t.board.leftBoard || 'You left the board' }));
+          navigate('/');
+        })
+        .catch((e: any) => dispatch(addToast({ type: 'error', message: e.message })));
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-dark relative">
       {/* Board Header */}
@@ -247,17 +260,22 @@ export const BoardView = () => {
         <div className="flex gap-2 w-full sm:w-auto shrink-0">
            {hasPermission('can_manage_users') && (
              <Button variant="secondary" onClick={() => setManageModalOpen(true)} className="flex-1 sm:flex-none justify-center !py-1.5 text-sm">
-               <span className="material-icons-round text-sm mr-1">settings</span> Manage
+               <span className="material-icons-round text-sm mr-1">settings</span> {t.board.manage}
              </Button>
            )}
            <Button variant="primary" onClick={() => {
               const code = board.inviteCode || 'error';
               const link = `${window.location.origin}/join/${code}`;
               navigator.clipboard.writeText(link);
-              dispatch(addToast({ type: 'info', message: 'Invite code copied to clipboard!' }));
+              dispatch(addToast({ type: 'info', message: t.board.linkCopied }));
            }} className="flex-1 sm:flex-none justify-center !py-1.5 text-sm">
-             <span className="material-icons-round text-sm mr-1">link</span> Invite Link
+             <span className="material-icons-round text-sm mr-1">link</span> {t.board.inviteLink}
            </Button>
+           {currentUserMember?.role !== 'owner' && (
+             <Button variant="danger" onClick={handleLeaveBoard} className="flex-1 sm:flex-none justify-center !py-1.5 text-sm">
+               <span className="material-icons-round text-sm mr-1">logout</span> {t.board.leaveBoard}
+             </Button>
+           )}
         </div>
       </div>
 
@@ -308,7 +326,7 @@ export const BoardView = () => {
                                  .unwrap()
                                  .catch((e: any) => dispatch(addToast({ type: 'error', message: e.message || 'Failed to delete column' })));
                             } else {
-                               dispatch(addToast({ type: 'error', message: 'Cannot delete column with tasks.' }));
+                               dispatch(addToast({ type: 'error', message: t.board.cannotDeleteColumnWithTasks }));
                             }
                          }} className="hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-500 text-gray-400 rounded p-1 ml-1">
                            <span className="material-icons-round text-lg">delete</span>
@@ -369,7 +387,7 @@ export const BoardView = () => {
                     className="w-full py-2.5 flex items-center justify-center gap-2 text-primary hover:bg-primary/10 rounded-lg transition-colors border border-dashed border-primary/30 hover:border-primary font-bold"
                   >
                     <span className="material-icons-round text-xl">add</span>
-                    <span className="text-sm">Add New Task</span>
+                    <span className="text-sm">{t.board.addTask}</span>
                   </button>
                 </div>
               )}
@@ -379,7 +397,7 @@ export const BoardView = () => {
           {hasPermission('can_manage_columns') && (
             <div className="w-[85vw] sm:w-80 h-full shrink-0 flex flex-col">
                <div className="bg-gray-200/50 dark:bg-darkSurface/20 rounded-xl p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col gap-3">
-                 <span className="font-bold text-gray-500 text-sm">Add New Section</span>
+                 <span className="font-bold text-gray-500 text-sm">{t.board.addColumn}</span>
                  <Input 
                    value={newColumnTitle} 
                    onChange={e => setNewColumnTitle(e.target.value)} 
@@ -387,7 +405,7 @@ export const BoardView = () => {
                    className="text-sm"
                  />
                  <Button onClick={handleAddColumn} disabled={!newColumnTitle} className="w-full justify-center">
-                    Create Column
+                    {t.board.addColumn}
                  </Button>
                </div>
             </div>
@@ -401,7 +419,7 @@ export const BoardView = () => {
         task={editingTask}
         onSave={handleSaveTask}
         onDelete={handleDeleteTask}
-        users={users} 
+        users={users.filter(u => board.members.some(m => m.userId === u.id))} 
         taskTypes={board.taskTypes || []}
         canEdit={hasPermission('can_edit_task')}
         canDelete={hasPermission('can_delete_task')}
@@ -416,11 +434,11 @@ export const BoardView = () => {
          canDelete={(board.taskTypes?.length || 0) > 1}
       />
 
-      <Modal isOpen={isManageModalOpen} onClose={() => setManageModalOpen(false)} title="Board Members">
+      <Modal isOpen={isManageModalOpen} onClose={() => setManageModalOpen(false)} title={t.members.title}>
          <div className="space-y-6">
             <div>
-              <h4 className="font-bold mb-2 text-sm text-gray-500 uppercase tracking-wide">Invite User</h4>
-              <Input value={inviteSearch} onChange={e => setInviteSearch(e.target.value)} placeholder="Search users by name..." />
+              <h4 className="font-bold mb-2 text-sm text-gray-500 uppercase tracking-wide">{t.members.invite}</h4>
+              <Input value={inviteSearch} onChange={e => setInviteSearch(e.target.value)} placeholder={t.members.searchUsers} />
               <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
                  {foundUsers.map(u => {
                    const isMember = board.members.some(m => m.userId === u.id);
@@ -436,11 +454,11 @@ export const BoardView = () => {
                           </div>
                         </div>
                         {isMember ? (
-                           <span className="text-xs font-bold text-gray-400 px-3">Member</span>
+                           <span className="text-xs font-bold text-gray-400 px-3">{t.members.title}</span>
                         ) : isPending ? (
-                           <span className="text-xs font-bold text-orange-500 px-3">Pending</span>
+                           <span className="text-xs font-bold text-orange-500 px-3">{t.common.loading}</span>
                         ) : (
-                           <Button size="sm" onClick={() => handleInviteUser(u.id)}>Invite</Button>
+                           <Button size="sm" onClick={() => handleInviteUser(u.id)}>{t.members.invite}</Button>
                         )}
                      </div>
                    );
@@ -449,9 +467,9 @@ export const BoardView = () => {
             </div>
 
             <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
-               <h4 className="font-bold mb-2 text-sm text-gray-500 uppercase tracking-wide">Pending Invitations</h4>
+               <h4 className="font-bold mb-2 text-sm text-gray-500 uppercase tracking-wide">{t.notifications.title}</h4>
                {(!board.pendingInvites || board.pendingInvites.length === 0) ? (
-                  <p className="text-sm text-gray-400 italic">No pending invitations.</p>
+                  <p className="text-sm text-gray-400 italic">{t.notifications.noNotifications}</p>
                ) : (
                   <div className="space-y-2">
                     {board.pendingInvites.map(pendingId => {
@@ -463,7 +481,7 @@ export const BoardView = () => {
                                 <Avatar name={u.displayName} url={u.avatarUrl} size="sm" />
                                 <span className="text-sm font-medium">{u.displayName} <span className="text-xs text-gray-400">(@{u.username})</span></span>
                              </div>
-                             <Button size="sm" variant="ghost" onClick={() => handleRevokeInvite(pendingId)} className="text-red-500 hover:text-red-700 hover:bg-red-50">Revoke</Button>
+                             <Button size="sm" variant="ghost" onClick={() => handleRevokeInvite(pendingId)} className="text-red-500 hover:text-red-700 hover:bg-red-50">{t.members.remove}</Button>
                           </div>
                        );
                     })}
@@ -472,7 +490,7 @@ export const BoardView = () => {
             </div>
 
             <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
-              <h4 className="font-bold mb-2 text-sm text-gray-500 uppercase tracking-wide">Members & Permissions</h4>
+              <h4 className="font-bold mb-2 text-sm text-gray-500 uppercase tracking-wide">{t.members.permissions}</h4>
               <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2 custom-scrollbar">
                  {board.members.map(m => {
                     const u = users.find(usr => usr.id === m.userId);
@@ -484,7 +502,7 @@ export const BoardView = () => {
                            <span className="font-bold text-sm">{u.displayName} <span className="text-gray-500 font-normal">{isOwner ? '(Owner)' : ''}</span></span>
                            {!isOwner && <button className="text-red-500 text-xs hover:underline" onClick={() => {
                               dispatch(updateBoard({ ...board, members: board.members.filter(mem => mem.userId !== m.userId) }));
-                           }}>Remove</button>}
+                           }}>{t.members.remove}</button>}
                         </div>
                         {!isOwner && (
                            <div className="grid grid-cols-2 gap-2">

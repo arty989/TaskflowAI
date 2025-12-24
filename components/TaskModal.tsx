@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Task, User, TaskType } from '../types';
 import { Button, Input, Modal, Avatar } from './Common';
 import { improveTaskDescription, analyzeTaskWithThinking } from '../services/geminiService';
+import { useLanguage } from '../i18n';
 
 interface TaskModalProps {
   task?: Task;
@@ -16,6 +17,7 @@ interface TaskModalProps {
 }
 
 export const TaskModal = ({ task, isOpen, onClose, onSave, onDelete, users, taskTypes, canEdit, canDelete }: TaskModalProps) => {
+  const { t } = useLanguage();
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [assigneeIds, setAssigneeIds] = useState<string[]>(task?.assigneeIds || []);
@@ -79,17 +81,17 @@ export const TaskModal = ({ task, isOpen, onClose, onSave, onDelete, users, task
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={task ? 'Edit Task' : 'New Task'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={task ? t.board.editTask : t.board.addTask}>
         <div className="space-y-5">
           {/* Title Input */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Title</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">{t.board.taskTitle}</label>
             <Input value={title} onChange={e => setTitle(e.target.value)} disabled={!canEdit} placeholder="What needs to be done?" className="font-semibold text-lg" />
           </div>
 
           {/* Description with AI */}
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Description</label>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">{t.board.taskDescription}</label>
             <div className="relative group">
               <textarea
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-darkSurface/50 border border-gray-200 dark:border-gray-700 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-primary h-48 text-sm leading-relaxed transition-colors resize-none"
@@ -150,23 +152,23 @@ export const TaskModal = ({ task, isOpen, onClose, onSave, onDelete, users, task
             {/* Task Types Selector */}
             <div className="space-y-2">
                 <div className="flex justify-between items-end mb-1">
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Category</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">{t.board.taskType}</label>
                 </div>
                 <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto pr-1">
-                  {taskTypes.map(t => (
+                  {taskTypes.map(type => (
                     <button
-                      key={t.id}
-                      onClick={() => canEdit && setTypeId(t.id)}
+                      key={type.id}
+                      onClick={() => canEdit && setTypeId(type.id)}
                       disabled={!canEdit}
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg border transition-all text-left group ${
-                        typeId === t.id 
+                        typeId === type.id 
                         ? 'border-primary bg-primary/5 ring-1 ring-primary shadow-sm' 
                         : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
-                      <span className={`w-3 h-3 rounded-full shadow-sm ring-2 ring-white dark:ring-darkSurface transition-transform ${typeId === t.id ? 'scale-125' : ''}`} style={{ backgroundColor: t.color }}></span>
-                      <span className={`text-sm font-medium ${typeId === t.id ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>{t.label}</span>
-                      {typeId === t.id && <span className="material-icons-round text-primary ml-auto text-sm">check</span>}
+                      <span className={`w-3 h-3 rounded-full shadow-sm ring-2 ring-white dark:ring-darkSurface transition-transform ${typeId === type.id ? 'scale-125' : ''}`} style={{ backgroundColor: type.color }}></span>
+                      <span className={`text-sm font-medium ${typeId === type.id ? 'text-primary' : 'text-gray-600 dark:text-gray-300'}`}>{type.label}</span>
+                      {typeId === type.id && <span className="material-icons-round text-primary ml-auto text-sm">check</span>}
                     </button>
                   ))}
                 </div>
@@ -174,7 +176,7 @@ export const TaskModal = ({ task, isOpen, onClose, onSave, onDelete, users, task
 
             {/* Assignees */}
             <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Assignees</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{t.board.assignees}</label>
                 <div className="flex flex-wrap gap-2">
                   {users.map(u => {
                     const isSelected = assigneeIds.includes(u.id);
@@ -197,12 +199,12 @@ export const TaskModal = ({ task, isOpen, onClose, onSave, onDelete, users, task
 
           <div className="flex justify-between pt-6 border-t border-gray-100 dark:border-gray-700 mt-4">
             {canDelete && task ? (
-               <Button variant="danger" onClick={handleDelete} className="px-4">Delete Task</Button>
+               <Button variant="danger" onClick={handleDelete} className="px-4">{t.board.deleteTask}</Button>
             ) : <div />}
             
             <div className="flex gap-3">
-               <Button variant="ghost" onClick={onClose}>Cancel</Button>
-               {canEdit && <Button onClick={handleSave} className="px-6 shadow-lg shadow-primary/20">Save Task</Button>}
+               <Button variant="ghost" onClick={onClose}>{t.common.cancel}</Button>
+               {canEdit && <Button onClick={handleSave} className="px-6 shadow-lg shadow-primary/20">{t.common.save}</Button>}
             </div>
           </div>
         </div>

@@ -70,6 +70,9 @@ export const translations = {
       loading: 'Loading...',
       boardNotFound: 'Board not found',
       backToDashboard: 'Back to Dashboard',
+      leaveBoard: 'Leave Board',
+      confirmLeave: 'Are you sure you want to leave this board?',
+      leftBoard: 'You left the board',
     },
     // Members
     members: {
@@ -107,6 +110,13 @@ export const translations = {
       changesSaved: 'Profile updated successfully!',
       darkMode: 'Dark Mode',
       language: 'Language',
+      displayName: 'Display Name',
+      username: 'Username',
+      email: 'Email Address',
+      telegram: 'Telegram Username',
+      newPassword: 'New Password',
+      newPasswordPlaceholder: 'Leave empty to keep current',
+      changesNote: 'Changes are saved to database.',
     },
     // Common
     common: {
@@ -197,6 +207,9 @@ export const translations = {
       loading: 'Загрузка...',
       boardNotFound: 'Доска не найдена',
       backToDashboard: 'Вернуться к доскам',
+      leaveBoard: 'Покинуть доску',
+      confirmLeave: 'Вы уверены, что хотите покинуть эту доску?',
+      leftBoard: 'Вы покинули доску',
     },
     // Members
     members: {
@@ -234,6 +247,13 @@ export const translations = {
       changesSaved: 'Профиль обновлён!',
       darkMode: 'Тёмная тема',
       language: 'Язык',
+      displayName: 'Отображаемое имя',
+      username: 'Имя пользователя',
+      email: 'Email адрес',
+      telegram: 'Telegram',
+      newPassword: 'Новый пароль',
+      newPasswordPlaceholder: 'Оставьте пустым, чтобы не менять',
+      changesNote: 'Изменения сохраняются в базу данных.',
     },
     // Common
     common: {

@@ -2,12 +2,18 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { User, AuthState } from '../types';
 import { api } from '../services/supabaseBackend';
 
+const savedTheme = typeof window !== 'undefined' ? localStorage.getItem('theme') as 'light' | 'dark' | null : null;
+
 const initialState: AuthState = {
   user: null,
   token: null,
-  theme: 'light',
+  theme: savedTheme || 'light',
   isAuthenticated: false,
 };
+
+if (typeof window !== 'undefined' && savedTheme === 'dark') {
+  document.documentElement.classList.add('dark');
+}
 
 export const loginUser = createAsyncThunk('auth/login', async ({email, password}: {email: string, password?: string}) => {
   const user = await api.auth.login(email, password);
@@ -42,6 +48,7 @@ const authSlice = createSlice({
     },
     toggleTheme(state) {
       state.theme = state.theme === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', state.theme);
       if (state.theme === 'dark') document.documentElement.classList.add('dark');
       else document.documentElement.classList.remove('dark');
     }

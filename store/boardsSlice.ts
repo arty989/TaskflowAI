@@ -163,6 +163,23 @@ export const joinBoard = createAsyncThunk('boards/join', async ({boardId, userId
   return updatedBoard;
 });
 
+export const leaveBoard = createAsyncThunk('boards/leave', async ({boardId, userId}: {boardId: string, userId: string}) => {
+  const board = await api.boards.getById(boardId);
+  if (!board) throw new Error('Board not found');
+  
+  const member = board.members.find(m => m.userId === userId);
+  if (!member) throw new Error('Not a member');
+  if (member.role === 'owner') throw new Error('Owner cannot leave board');
+  
+  const updatedBoard = {
+    ...board,
+    members: board.members.filter(m => m.userId !== userId)
+  };
+  
+  await api.boards.update(updatedBoard);
+  return { boardId, userId };
+});
+
 const boardsSlice = createSlice({
   name: 'boards',
   initialState,
@@ -255,6 +272,10 @@ const boardsSlice = createSlice({
             col.isExitLocked = isExitLocked;
           }
         }
+      })
+      .addCase(leaveBoard.fulfilled, (state, action) => {
+        const { boardId } = action.payload;
+        state.items = state.items.filter(b => b.id !== boardId);
       });
   }
 });

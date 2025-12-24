@@ -7,33 +7,6 @@ import { addToast } from '../store/uiSlice';
 import { Button, Input, Avatar } from '../components/Common';
 import { useLanguage } from '../i18n';
 
-const SensitiveField = ({ label, value, onChange, name }: { label: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, name: string }) => {
-  const [visible, setVisible] = useState(false);
-  
-  return (
-    <div>
-       <label className="block text-sm font-medium mb-1 dark:text-gray-400">{label}</label>
-       <div className="relative">
-         <Input 
-            name={name}
-            value={value}
-            onChange={onChange}
-            type={visible ? "text" : "password"}
-            className="pr-10 font-mono text-sm"
-         />
-         <button
-            type="button"
-            onClick={() => setVisible(!visible)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-            title={visible ? "Hide" : "Show"}
-         >
-            <span className="material-icons-round text-lg block">{visible ? 'visibility_off' : 'visibility'}</span>
-         </button>
-       </div>
-    </div>
-  );
-};
-
 interface ProfileProps {
   onClose?: () => void;
 }
@@ -48,7 +21,7 @@ export const Profile = ({ onClose }: ProfileProps) => {
     username: user?.username || '',
     email: user?.email || '',
     telegram: user?.telegram || '',
-    password: user?.password || ''
+    newPassword: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,18 +75,14 @@ export const Profile = ({ onClose }: ProfileProps) => {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{formData.displayName}</h2>
               <p className="text-gray-500 font-medium">@{formData.username}</p>
               
-              <div className="flex flex-wrap gap-2 mt-4 justify-center md:justify-start">
-                 <div className="text-xs bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg text-gray-500 font-mono flex items-center gap-1">
-                    <span className="material-icons-round text-xs">fingerprint</span>
-                    {user?.id}
-                 </div>
-                 {user?.telegram && (
+              {user?.telegram && (
+                 <div className="flex flex-wrap gap-2 mt-4 justify-center md:justify-start">
                     <a href={`https://t.me/${user.telegram.replace('@', '')}`} target="_blank" rel="noreferrer" className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-lg font-medium hover:underline flex items-center gap-1">
                        <span className="material-icons-round text-xs">send</span>
                        {user.telegram}
                     </a>
-                 )}
-              </div>
+                 </div>
+              )}
            </div>
            
            <div className="flex flex-col gap-3 w-full md:w-48 relative mt-4">
@@ -137,36 +106,38 @@ export const Profile = ({ onClose }: ProfileProps) => {
            
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                 <label className="block text-sm font-medium mb-1 dark:text-gray-400">Display Name</label>
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-400">{t.profile.displayName}</label>
                  <Input name="displayName" value={formData.displayName} onChange={handleChange} />
               </div>
               <div>
-                 <label className="block text-sm font-medium mb-1 dark:text-gray-400">Username</label>
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-400">{t.profile.username}</label>
                  <Input name="username" value={formData.username} onChange={handleChange} />
               </div>
               
-              <SensitiveField 
-                 label="Email Address" 
-                 name="email" 
-                 value={formData.email} 
-                 onChange={handleChange} 
-              />
+              <div>
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-400">{t.profile.email}</label>
+                 <Input name="email" type="email" value={formData.email} onChange={handleChange} />
+              </div>
               
-              <SensitiveField 
-                 label="Password" 
-                 name="password" 
-                 value={formData.password} 
-                 onChange={handleChange} 
-              />
+              <div>
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-400">{t.profile.newPassword}</label>
+                 <Input 
+                    name="newPassword" 
+                    type="password"
+                    value={formData.newPassword} 
+                    onChange={handleChange}
+                    placeholder={t.profile.newPasswordPlaceholder}
+                 />
+              </div>
               
               <div className="md:col-span-2">
-                 <label className="block text-sm font-medium mb-1 dark:text-gray-400">Telegram Username</label>
+                 <label className="block text-sm font-medium mb-1 dark:text-gray-400">{t.profile.telegram}</label>
                  <Input name="telegram" value={formData.telegram} onChange={handleChange} placeholder="@username" />
               </div>
            </div>
            
            <div className="pt-6 flex justify-between items-center border-t border-gray-100 dark:border-gray-700 mt-2">
-              <span className="text-xs text-gray-400">Changes are saved immediately to local database.</span>
+              <span className="text-xs text-gray-400">{t.profile.changesNote}</span>
               <Button onClick={handleSave} size="lg" className="px-8 shadow-lg shadow-primary/20">{t.profile.saveChanges}</Button>
            </div>
         </div>
