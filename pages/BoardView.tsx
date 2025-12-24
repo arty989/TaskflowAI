@@ -274,14 +274,6 @@ export const BoardView = () => {
                <span className="material-icons-round text-sm mr-1">settings</span> {t.board.manage}
              </Button>
            )}
-           <Button variant="primary" onClick={() => {
-              const code = board.inviteCode || 'error';
-              const link = `${window.location.origin}/join/${code}`;
-              navigator.clipboard.writeText(link);
-              dispatch(addToast({ type: 'info', message: t.board.linkCopied }));
-           }} className="flex-1 sm:flex-none justify-center !py-1.5 text-sm">
-             <span className="material-icons-round text-sm mr-1">link</span> {t.board.inviteLink}
-           </Button>
            {currentUserMember?.role !== 'owner' && (
              <Button variant="danger" onClick={handleLeaveBoard} className="flex-1 sm:flex-none justify-center !py-1.5 text-sm">
                <span className="material-icons-round text-sm mr-1">logout</span> {t.board.leaveBoard}

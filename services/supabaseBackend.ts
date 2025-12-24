@@ -216,13 +216,19 @@ export const api = {
       return await getMyUser();
     },
 
-    updateProfile: async (userId: string, updates: Partial<User>): Promise<User> => {
+    updateProfile: async (userId: string, updates: Partial<User> & { newPassword?: string }): Promise<User> => {
       const payload: Partial<DbProfile> = {};
       if (typeof updates.username === 'string') payload.username = updates.username;
       if (typeof updates.displayName === 'string') payload.display_name = updates.displayName;
       if (typeof updates.email === 'string') payload.email = updates.email;
       if (typeof updates.telegram === 'string') payload.telegram = updates.telegram;
       if (typeof updates.avatarUrl === 'string') payload.avatar_url = updates.avatarUrl;
+
+      // Handle password change
+      if (updates.newPassword && updates.newPassword.trim().length > 0) {
+        const authRes = await supabase.auth.updateUser({ password: updates.newPassword });
+        if (authRes.error) throw new Error('Password update failed: ' + authRes.error.message);
+      }
 
       const res = await supabase.from('profiles').update(payload).eq('id', userId).select('*').single();
       const updated = requireOk(res, 'Failed to update profile');

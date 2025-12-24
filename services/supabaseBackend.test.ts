@@ -311,14 +311,30 @@ describe('supabaseBackend API', () => {
           },
         ];
 
-        const mockFrom = jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              order: jest.fn().mockReturnValue({
-                limit: jest.fn().mockResolvedValue({ data: mockNotifications, error: null }),
+        const mockProfiles = [
+          { id: 'user-1', username: 'inviter', display_name: 'Inviter User' },
+        ];
+
+        const mockFrom = jest.fn().mockImplementation((table: string) => {
+          if (table === 'notifications') {
+            return {
+              select: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  order: jest.fn().mockReturnValue({
+                    limit: jest.fn().mockResolvedValue({ data: mockNotifications, error: null }),
+                  }),
+                }),
               }),
-            }),
-          }),
+            };
+          }
+          if (table === 'profiles') {
+            return {
+              select: jest.fn().mockReturnValue({
+                in: jest.fn().mockResolvedValue({ data: mockProfiles, error: null }),
+              }),
+            };
+          }
+          return {};
         });
         mockSupabase.from = mockFrom;
 
@@ -327,6 +343,7 @@ describe('supabaseBackend API', () => {
         expect(result).toHaveLength(1);
         expect(result[0].type).toBe('invite');
         expect(result[0].read).toBe(false);
+        expect(result[0].fromUsername).toBe('Inviter User');
       });
     });
 
