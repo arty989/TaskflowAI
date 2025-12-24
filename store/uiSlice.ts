@@ -1,0 +1,24 @@
+
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { UiState, ToastMessage } from '../types';
+
+const initialState: UiState = {
+  toasts: [],
+};
+
+const uiSlice = createSlice({
+  name: 'ui',
+  initialState,
+  reducers: {
+    addToast(state, action: PayloadAction<Omit<ToastMessage, 'id'>>) {
+      const id = Date.now().toString() + Math.random().toString();
+      state.toasts.push({ ...action.payload, id });
+    },
+    removeToast(state, action: PayloadAction<string>) {
+      state.toasts = state.toasts.filter(t => t.id !== action.payload);
+    }
+  }
+});
+
+export const { addToast, removeToast } = uiSlice.actions;
+export default uiSlice.reducer;
