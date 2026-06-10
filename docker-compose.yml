@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  taskflow:
+    build: .
+    # Map port 8080 on your host to port 80 inside the container
+    ports:
+      - "8080:80"
+    # Load environment variables from the .env file in your project root
+    env_file:
+      - .env
+    restart: unless-stopped

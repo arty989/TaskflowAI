@@ -1,0 +1,11 @@
+# Exclude node modules and build outputs
+node_modules
+dist
+
+# Ignore version control data
+.git
+.gitignore
+
+# Do not copy your local environment files into the image. The builder copies only the .env file.
+.env.local
+*.log
