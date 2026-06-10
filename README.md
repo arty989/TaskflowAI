@@ -1,189 +1,145 @@
 # TaskFlow AI
 
-Современное веб-приложение для совместного управления задачами и проектами. TaskFlow AI позволяет создавать доски задач, приглашать участников и управлять задачами с помощью drag-and-drop. Приложение поддерживает русский и английский языки интерфейса.
+TaskFlow AI — веб-приложение для совместного управления проектами и задачами в формате Kanban-досок.
 
-**Демо:** [https://taskflow-ai-beta.vercel.app](https://taskflow-ai-beta.vercel.app)
+- **Сайт:** https://taskflow-ai-beta.vercel.app
+- **Документация:** https://taskflow-ai-beta.vercel.app/docs
+- **Репозиторий:** https://github.com/arty989/TaskflowAI
 
----
+## Возможности
 
-## Получение исходников
+- регистрация и вход пользователей;
+- создание и удаление досок;
+- создание колонок, типов и задач;
+- перенос задач между колонками с помощью drag-and-drop;
+- назначение исполнителей;
+- приглашение участников на доску;
+- уведомления о приглашениях;
+- редактирование профиля;
+- русский и английский интерфейс.
+
+## Архитектура
+
+```text
+Браузер
+  |
+  | HTTPS
+  v
+Vercel (React + Vite)
+  |
+  | HTTPS API
+  v
+Supabase
+  ├── Authentication
+  └── PostgreSQL + Row Level Security
+```
+
+Локальная Docker-сборка использует Node.js для сборки приложения и Nginx для раздачи статических файлов.
+
+## Технологии
+
+- React 19;
+- TypeScript;
+- Vite;
+- Redux Toolkit;
+- React Router;
+- Supabase Auth;
+- PostgreSQL;
+- Docker;
+- Nginx;
+- Vercel.
+
+## Запуск через Docker
+
+### 1. Клонирование
 
 ```bash
 git clone https://github.com/arty989/TaskflowAI.git
 cd TaskflowAI
 ```
 
----
-
-## Требования
-
-### Необходимое ПО
-
-| Компонент | Версия | Установка |
-|-----------|--------|-----------|
-| **Node.js** | 18 LTS или выше | [nodejs.org](https://nodejs.org/) |
-| **npm** | 9+ (идёт с Node.js) | Устанавливается вместе с Node.js |
-
-### База данных
-
-Проект использует **Supabase** — облачную PostgreSQL базу данных с встроенной аутентификацией.
-
-- Аккаунт Supabase не требуется для проверки — проект уже подключён к рабочей базе данных
-- Для создания своего инстанса: [supabase.com](https://supabase.com/) (бесплатный план)
-
----
-
-## Запуск проекта
-
-### 1. Установка зависимостей
+### 2. Переменные окружения
 
 ```bash
-cd TaskflowAI
-npm install
+cp .env.example .env
+nano .env
 ```
 
-### 2. Настройка переменных окружения
-
-Создайте файл `.env.local` в корне проекта:
+Заполните:
 
 ```env
-VITE_SUPABASE_URL=https://aolaykhgakbgaatrgimv.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvbGF5a2hnYWtiZ2FhdHJnaW12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0MjIyMDksImV4cCI6MjA4MTk5ODIwOX0.LQyCxI-Pz0z519-ZvtHMqbbqWyWrW5czB02iPAabn9M
+VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
+GEMINI_API_KEY=
 ```
 
-> **Примечание:** Эти ключи предоставлены для проверки преподавателями. База данных уже настроена и содержит необходимые таблицы.
+Не используйте `service_role`, `sb_secret_...` или другие серверные секреты во frontend-переменных.
 
-### 3. Настройка базы данных (только для нового инстанса)
-
-Если вы создаёте свой Supabase проект, выполните SQL скрипты в Supabase SQL Editor:
+### 3. Сборка и запуск
 
 ```bash
-# Порядок выполнения:
-1. supabase/complete_schema.sql    # Создаёт таблицы и RLS политики
-2. supabase/join_board_by_invite.sql  # Создаёт функцию для приглашений
+docker-compose up --build
 ```
 
-### 4. Запуск приложения
+Приложение:
+
+```text
+http://localhost:8080
+```
+
+Health check:
+
+```text
+http://localhost:8080/health
+```
+
+Остановка:
 
 ```bash
+docker-compose down
+```
+
+## Запуск без Docker
+
+```bash
+npm install
 npm run dev
 ```
 
-### 5. Открытие в браузере
+Dev-сервер:
 
-После запуска приложение доступно по адресу:
-
-```
+```text
 http://localhost:8000
 ```
 
----
+## Настройка собственного Supabase
 
-## Основной бизнес-кейс
+1. Создайте проект Supabase.
+2. Выполните в SQL Editor:
 
-### Сценарий: Создание доски и приглашение участника
-
-#### Шаг 1: Регистрация
-1. Откройте приложение
-2. Нажмите "Register" (или "Регистрация" при русском интерфейсе)
-3. Заполните форму: имя, email, пароль
-4. Нажмите "Create Account"
-
-#### Шаг 2: Создание доски
-1. На Dashboard нажмите "New Board"
-2. Введите название доски (например, "Мой проект")
-3. Нажмите "Create Board"
-
-#### Шаг 3: Добавление задач
-1. Откройте созданную доску
-2. В колонке "To Do" нажмите "+" 
-3. Введите название задачи и описание
-4. Нажмите "Save"
-5. Перетащите задачу в другую колонку (drag-and-drop)
-
-#### Шаг 4: Приглашение участника
-1. Нажмите на кнопку настроек доски (шестерёнка)
-2. В поле поиска введите имя или username пользователя
-3. Нажмите "Invite" рядом с найденным пользователем
-4. Получатель увидит уведомление в колокольчике и нажмёт "Accept"
-5. Доска появится в его Dashboard
-
-#### Шаг 5: Совместная работа
-- Оба участника видят изменения
-- Можно назначать задачи на участников
-- Уведомления о приглашениях отображаются в колокольчике
-
----
-
-## Структура проекта
-
-```
-taskflow-ai/
-├── components/           # React UI компоненты
-│   ├── Common.tsx       # Базовые компоненты (Button, Input, Modal, Avatar)
-│   ├── Toast.tsx        # Компонент уведомлений
-│   ├── TaskModal.tsx    # Модальное окно задачи
-│   └── TypeManager.tsx  # Управление типами задач
-│
-├── pages/               # Страницы приложения
-│   ├── Auth.tsx         # Страницы входа и регистрации
-│   ├── Dashboard.tsx    # Главная страница с досками
-│   ├── BoardView.tsx    # Просмотр и редактирование доски
-│   └── Profile.tsx      # Профиль пользователя
-│
-├── store/               # Redux store
-│   ├── index.ts         # Конфигурация store
-│   ├── authSlice.ts     # Слайс аутентификации
-│   ├── boardsSlice.ts   # Слайс досок и задач
-│   ├── usersSlice.ts    # Слайс пользователей и уведомлений
-│   └── uiSlice.ts       # Слайс UI состояния
-│
-├── services/            # Сервисы и API
-│   ├── supabaseClient.ts    # Инициализация Supabase клиента
-│   ├── supabaseBackend.ts   # API методы для работы с БД
-│   └── geminiService.ts     # Интеграция с Gemini AI (опционально)
-│
-├── i18n/                # Мультиязычность
-│   ├── translations.ts  # Переводы EN/RU
-│   ├── LanguageContext.tsx  # React контекст языка
-│   └── index.ts         # Экспорты
-│
-├── supabase/            # SQL скрипты для базы данных
-│   ├── complete_schema.sql      # Схема БД и RLS политики
-│   └── join_board_by_invite.sql # Функция приглашений
-│
-├── App.tsx              # Главный компонент с роутингом
-├── index.tsx            # Точка входа React
-├── types.ts             # TypeScript типы
-├── index.html           # HTML шаблон
-└── vite.config.ts       # Конфигурация Vite
+```text
+supabase/complete_schema.sql
+supabase/join_board_by_invite.sql
 ```
 
----
+3. Добавьте URL проекта и publishable key в `.env`.
 
-## Технологии
+## Проверка основного сценария
 
-- **Frontend:** React 19, TypeScript
-- **Стилизация:** TailwindCSS 4
-- **State Management:** Redux Toolkit
-- **Роутинг:** React Router 7
-- **Backend:** Supabase (PostgreSQL + Auth + RLS)
-- **Сборка:** Vite 6
+1. Зарегистрируйте двух пользователей.
+2. Первый пользователь создаёт доску и задачу.
+3. Первый пользователь приглашает второго.
+4. Второй принимает приглашение.
+5. Оба пользователя открывают одну доску и работают с задачами.
 
----
+## Безопасность
 
-## Команды
+- `.env` и `.env.local` исключены из Git;
+- клиент использует только Supabase publishable key;
+- доступ к данным ограничивается PostgreSQL Row Level Security;
+- серверные secret/service-role ключи не должны попадать в браузер или репозиторий.
 
-| Команда | Описание |
-|---------|----------|
-| `npm install` | Установка зависимостей |
-| `npm run dev` | Запуск dev сервера |
-| `npm run build` | Production сборка |
-| `npm run preview` | Превью production сборки |
-| `npm test` | Запуск тестов |
+## Автор
 
----
-
-## Лицензия
-
-MIPT
+Артемий Парамонов  
+МФТИ, учебный проект по компьютерным сетям.
