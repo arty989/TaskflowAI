@@ -52,7 +52,7 @@ type DbTask = {
   assignee_ids: string[];
   type_id: string;
   created_at: string;
-  history: string[];
+  deadline: string | null; history: string[];
 };
 
 type DbInvite = {
@@ -111,7 +111,7 @@ const mapBoard = (input: {
     assigneeIds: t.assignee_ids,
     typeId: t.type_id,
     createdAt: t.created_at,
-    history: t.history,
+    deadline: t.deadline ?? undefined, history: t.history,
   }));
 
   const members: BoardMember[] = input.members.map((m) => ({
@@ -474,7 +474,7 @@ export const api = {
           assignee_ids: t.assigneeIds ?? [],
           type_id: t.typeId,
           created_at: t.createdAt,
-          history: t.history ?? [],
+          deadline: t.deadline ?? null, history: t.history ?? [],
         };
         if (ensureUuid(t.id)) return { id: t.id, ...base };
         return base;
@@ -591,7 +591,7 @@ export const api = {
         description: task.description ?? '',
         assignee_ids: task.assigneeIds ?? [],
         type_id: task.typeId,
-        history: task.history ?? [],
+        deadline: task.deadline ?? null, history: task.history ?? [],
       }).select('*').single();
       
       if (res.error) throw new Error(res.error.message);
@@ -604,7 +604,7 @@ export const api = {
         assigneeIds: t.assignee_ids,
         typeId: t.type_id,
         createdAt: t.created_at,
-        history: t.history,
+        deadline: t.deadline ?? undefined, history: t.history,
       };
     },
 
@@ -615,7 +615,7 @@ export const api = {
         description: task.description ?? '',
         assignee_ids: task.assigneeIds ?? [],
         type_id: task.typeId,
-        history: task.history ?? [],
+        deadline: task.deadline ?? null, history: task.history ?? [],
       }).eq('id', task.id).select('*').single();
       
       if (res.error) throw new Error(res.error.message);
@@ -628,7 +628,7 @@ export const api = {
         assigneeIds: t.assignee_ids,
         typeId: t.type_id,
         createdAt: t.created_at,
-        history: t.history,
+        deadline: t.deadline ?? undefined, history: t.history,
       };
     },
 

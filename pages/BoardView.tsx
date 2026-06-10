@@ -12,6 +12,45 @@ import { TaskModal } from '../components/TaskModal';
 import { TypeEditorModal } from '../components/TypeManager';
 import { useLanguage } from '../i18n';
 
+
+type DeadlineSort = 'none' | 'asc' | 'desc';
+
+const sortTasksByDeadline = (tasks: Task[], sort: DeadlineSort): Task[] => {
+  if (sort === 'none') return tasks;
+  return [...tasks].sort((a, b) => {
+    if (!a.deadline && !b.deadline) return 0;
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    const left = new Date(a.deadline).getTime();
+    const right = new Date(b.deadline).getTime();
+    return sort === 'asc' ? left - right : right - left;
+  });
+};
+
+const getDeadlinePresentation = (deadline?: string) => {
+  if (!deadline) return null;
+  const date = new Date(deadline);
+  if (Number.isNaN(date.getTime())) return null;
+  const remaining = date.getTime() - Date.now();
+  const overdue = remaining < 0;
+  const urgent = !overdue && remaining <= 24 * 60 * 60 * 1000;
+  return {
+    text: date.toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+    label: overdue ? 'Просрочено' : urgent ? 'Скоро' : 'Дедлайн',
+    className: overdue
+      ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
+      : urgent
+        ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800'
+        : 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800',
+  };
+};
+
 export const BoardView = () => {
   const { boardId } = useParams();
   const navigate = useNavigate();
@@ -36,7 +75,7 @@ export const BoardView = () => {
   
   const [inviteSearch, setInviteSearch] = useState('');
   const [foundUsers, setFoundUsers] = useState(users);
-  const [newColumnTitle, setNewColumnTitle] = useState('');
+  const [newColumnTitle, setNewColumnTitle] = useState(''); const [deadlineSort, setDeadlineSort] = useState<DeadlineSort>('none');
 
   // Drag State for Types
   const [draggedTypeIndex, setDraggedTypeIndex] = useState<number | null>(null);
@@ -107,7 +146,7 @@ export const BoardView = () => {
         description: taskData.description || '',
         assigneeIds: taskData.assigneeIds || [],
         typeId: taskData.typeId || board.taskTypes[0].id,
-        history: [`Created by ${user?.username}`]
+        deadline: taskData.deadline, history: [`Created by ${user?.username}`]
       };
       dispatch(addTaskAsync({ boardId: board.id, task: newTask }));
       dispatch(addToast({ type: 'success', message: t.board.taskCreated }));
@@ -282,7 +321,23 @@ export const BoardView = () => {
         </div>
       </div>
 
-      {/* Kanban Canvas */}
+      
+<div className="mb-4 flex justify-end">
+  <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-darkSurface text-sm text-gray-600 dark:text-gray-300">
+    <span className="material-icons-round text-base">schedule</span>
+    <select
+      value={deadlineSort}
+      onChange={event => setDeadlineSort(event.target.value as DeadlineSort)}
+      className="bg-transparent focus:outline-none cursor-pointer"
+      aria-label="Сортировка задач по дедлайну"
+    >
+      <option value="none">Без сортировки</option>
+      <option value="asc">Сначала срочные</option>
+      <option value="desc">Сначала поздние</option>
+    </select>
+  </label>
+</div>
+{/* Kanban Canvas */}
       <div className="flex-1 relative overflow-x-auto overflow-y-hidden bg-gray-100/50 dark:bg-dark">
         <div className="absolute inset-0 flex px-4 pb-4 pt-4 gap-4 md:gap-6 w-max">
           {board.columns?.map((col, index) => (
@@ -345,10 +400,10 @@ export const BoardView = () => {
               </div>
               
               <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar relative">
-                {board.tasks.filter(t => t.columnId === col.id).map(task => {
+                {sortTasksByDeadline(board.tasks.filter(t => t.columnId === col.id), deadlineSort).map(task => {
                   const type = board.taskTypes?.find(tt => tt.id === task.typeId) || board.taskTypes?.[0];
                   const color = type?.color || '#9ca3af'; 
-                  const label = type?.label || 'Task';
+                  const label = type?.label || 'Task'; const deadlinePresentation = getDeadlinePresentation(task.deadline);
                   
                   return (
                     <div
@@ -369,6 +424,13 @@ export const BoardView = () => {
                            {col.isExitLocked && <span className="material-icons-round text-[10px] text-red-400">lock</span>}
                         </div>
                         <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-snug mb-2">{task.title}</h4>
+{deadlinePresentation && (
+  <div className={`mb-2 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold ${deadlinePresentation.className}`}>
+    <span className="material-icons-round text-sm">schedule</span>
+    <span>{deadlinePresentation.label}: {deadlinePresentation.text}</span>
+  </div>
+)}
+
                         {task.assigneeIds.length > 0 && (
                           <div className="flex justify-end -space-x-1.5">
                             {task.assigneeIds.map(uid => {

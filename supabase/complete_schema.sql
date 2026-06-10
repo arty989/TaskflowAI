@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   assignee_ids UUID[] DEFAULT ARRAY[]::UUID[],
   type_id UUID NOT NULL REFERENCES task_types(id),
   history TEXT[] DEFAULT ARRAY[]::TEXT[],
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  deadline TIMESTAMPTZ, created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Board invites table

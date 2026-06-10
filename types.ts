@@ -32,7 +32,7 @@ export interface Task {
   assigneeIds: string[];
   typeId: string; // References TaskType
   createdAt: string;
-  history: string[]; 
+  deadline?: string; history: string[]; 
 }
 
 export interface Column {

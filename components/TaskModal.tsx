@@ -4,6 +4,21 @@ import { Button, Input, Modal, Avatar } from './Common';
 import { improveTaskDescription, analyzeTaskWithThinking } from '../services/geminiService';
 import { useLanguage } from '../i18n';
 
+
+const deadlineToInputValue = (deadline?: string): string => {
+  if (!deadline) return '';
+  const date = new Date(deadline);
+  if (Number.isNaN(date.getTime())) return '';
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+};
+
+const inputValueToDeadline = (value: string): string | undefined => {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
 interface TaskModalProps {
   task?: Task;
   isOpen: boolean;
@@ -21,7 +36,7 @@ export const TaskModal = ({ task, isOpen, onClose, onSave, onDelete, users, task
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [assigneeIds, setAssigneeIds] = useState<string[]>(task?.assigneeIds || []);
-  const [typeId, setTypeId] = useState(task?.typeId || taskTypes[0]?.id || '');
+  const [typeId, setTypeId] = useState(task?.typeId || taskTypes[0]?.id || ''); const [deadline, setDeadline] = useState(deadlineToInputValue(task?.deadline));
   
   const [aiLoading, setAiLoading] = useState(false);
   const [thinkingLoading, setThinkingLoading] = useState(false);
@@ -32,7 +47,7 @@ export const TaskModal = ({ task, isOpen, onClose, onSave, onDelete, users, task
       setTitle(task?.title || '');
       setDescription(task?.description || '');
       setAssigneeIds(task?.assigneeIds || []);
-      setTypeId(task?.typeId || taskTypes[0]?.id || '');
+      setTypeId(task?.typeId || taskTypes[0]?.id || ''); setDeadline(deadlineToInputValue(task?.deadline));
       setAiSuggestion(null);
     }
   }, [isOpen, task, taskTypes]);
@@ -67,7 +82,7 @@ export const TaskModal = ({ task, isOpen, onClose, onSave, onDelete, users, task
 
   const handleSave = () => {
     if (!title || !typeId) return;
-    onSave({ title, description, assigneeIds, typeId });
+    onSave({ title, description, assigneeIds, typeId, deadline: inputValueToDeadline(deadline) });
     onClose();
   };
 
@@ -148,7 +163,26 @@ export const TaskModal = ({ task, isOpen, onClose, onSave, onDelete, users, task
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+<div className="mb-6">
+  <label htmlFor="task-deadline" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+    Дедлайн
+  </label>
+  <input
+    id="task-deadline"
+    type="datetime-local"
+    value={deadline}
+    onChange={event => setDeadline(event.target.value)}
+    disabled={!canEdit}
+    className="w-full px-4 py-2.5 bg-white dark:bg-darkSurface border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60"
+  />
+  {deadline && canEdit && (
+    <button type="button" onClick={() => setDeadline('')} className="mt-2 text-xs font-semibold text-gray-500 hover:text-red-500">
+      Убрать дедлайн
+    </button>
+  )}
+</div>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Task Types Selector */}
             <div className="space-y-2">
                 <div className="flex justify-between items-end mb-1">
